@@ -549,3 +549,222 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   Phase 2: Micro-Animations & Cloud Sentinel Banner Styles
+   ========================================================================== */
+
+/* Keyframe Animations */
+@keyframes beacon-radar {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes beacon-radar-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes banner-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes checkmark-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animated Sentinel Banner Container */
+.sentinel-banner {
+  background: linear-gradient(135deg, rgba(21, 29, 48, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(245, 158, 11, 0.15);
+  border-radius: var(--radius-lg);
+  margin: 0 0 1.5rem 0;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  animation: banner-slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sentinel-banner.connected {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.4), 0 0 20px -5px rgba(16, 185, 129, 0.12);
+}
+
+.sentinel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sentinel-left-content {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 1 1 auto;
+}
+
+/* Pulsing Status Beacon */
+.beacon-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.beacon-dot.warning {
+  background-color: #f59e0b;
+  animation: beacon-radar 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.beacon-dot.success {
+  background-color: #10b981;
+  animation: beacon-radar-green 2.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.sentinel-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sentinel-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.sentinel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+/* Interactive Details Drawer */
+.sentinel-drawer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 15, 26, 0.85);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+/* Code Snippet Box */
+.code-box {
+  background: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  color: #38bdf8;
+  position: relative;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-box-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.code-box-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.code-box-copy-btn.copied {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  animation: checkmark-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Header Interactive Status Pill */
+.header-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header-status-pill:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(30, 41, 59, 0.9);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.header-status-pill.warning {
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.header-status-pill.success {
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}

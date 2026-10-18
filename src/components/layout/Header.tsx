@@ -1,12 +1,14 @@
 import React from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { Menu, Bell } from 'lucide-react'
+import { CloudStatusPill } from '../common/CloudStatusPill'
 
 interface HeaderProps {
   onMenuToggle: () => void
+  onToggleSentinel?: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
+export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onToggleSentinel }) => {
   const location = useLocation()
 
   const getBreadcrumb = () => {
@@ -40,26 +42,8 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       </div>
 
       <div className="header-right">
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.3rem 0.75rem',
-          borderRadius: 'var(--radius-full)',
-          background: 'rgba(37, 99, 235, 0.1)',
-          border: '1px solid rgba(37, 99, 235, 0.25)',
-          color: 'var(--brand-light)',
-          fontSize: '0.78rem',
-          fontWeight: 600
-        }}>
-          <span style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            backgroundColor: '#4ade80'
-          }}></span>
-          Phase 1 Active
-        </div>
+        {/* Dynamic Cloud Connection Status Pill */}
+        <CloudStatusPill onInspect={onToggleSentinel} />
 
         <button
           type="button"
