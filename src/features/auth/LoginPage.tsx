@@ -61,15 +61,31 @@ export const LoginPage: React.FC = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password, fullName)
+        const { data, error } = await signUp(email, password, fullName)
         if (error) {
           setErrorMessage(error.message)
+        } else if (data?.user?.identities && data.user.identities.length === 0) {
+          // Supabase anti-enumeration flag: empty identities means account is already registered
+          setErrorMessage('An account with this email already exists. Please switch to "Staff Sign In" to log in.')
+          setIsSignUp(false)
+        } else if (data?.session) {
+          // Session already active (email confirmation turned off in Supabase)
+          setSuccessMessage('Staff account created! Signing you in...')
+          const destination = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/'
+          navigate(destination, { replace: true })
         } else {
-          setSuccessMessage('Staff account created successfully! Signing you in...')
-          // Attempt sign in immediately after registration
+          // Session is not yet active -> try immediate sign-in or give clear verification guidance
           const loginRes = await signIn(email, password)
           if (!loginRes.error) {
+            setSuccessMessage('Staff account created! Signing you in...')
             navigate('/', { replace: true })
+          } else {
+            const errLower = loginRes.error.message.toLowerCase()
+            if (errLower.includes('confirm') || errLower.includes('not confirmed') || errLower.includes('invalid login')) {
+              setErrorMessage('Account created! Please check your email to verify your address, or switch to "Staff Sign In" if already confirmed.')
+            } else {
+              setErrorMessage(loginRes.error.message)
+            }
           }
         }
       } else {
