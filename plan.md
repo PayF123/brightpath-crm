@@ -420,8 +420,8 @@ graph TD
 | **Phase 0** | Baseline Tooling, TypeScript, Build Pipeline | Setup | **COMPLETED & COMMITTED** |
 | **Phase 1** | Design System, App Shell, Responsive Navigation | UI / Layout | **COMPLETED & VERIFIED LOCALLY** |
 | **Phase 2** | Supabase Client & Config Sentinel Banner | Integration | **COMPLETED & VERIFIED LOCALLY** |
-| **Phase 3** | Database Migrations, Schema & RLS Policies | Database | **Ready to Implement** |
-| **Phase 4** | Authentication & Role Lifecycle (RBAC) | Auth | Pending Phase 3 |
+| **Phase 3** | Database Migrations, Schema & RLS Policies | Database | **SQL READY & VERIFIED LOCALLY** |
+| **Phase 4** | Authentication & Role Lifecycle (RBAC) | Auth | **Ready to Implement** |
 | **Phase 5** | Lead Creation & Validation (P0) | Core Feature | Pending Phase 4 |
 | **Phase 6** | Lead Directory, Search & Multi-Filters (P0) | Core Feature | Pending Phase 5 |
 | **Phase 7** | Lead Detail, Pipeline & Activity Log (P0) | Core Feature | Pending Phase 6 |

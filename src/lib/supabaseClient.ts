@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../types/database.types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
@@ -56,8 +57,8 @@ export function getSupabaseEnvDiagnostics() {
  * Supabase client singleton instance.
  * Initialized only when valid environment credentials are provided.
  */
-export const supabase: SupabaseClient | null = isSupabaseConfigured()
-  ? createClient(supabaseUrl!, supabaseAnonKey!, {
+export const supabase: SupabaseClient<Database> | null = isSupabaseConfigured()
+  ? createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
