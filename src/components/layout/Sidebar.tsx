@@ -1,12 +1,14 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 import {
   LayoutDashboard,
   Users,
   CalendarClock,
   BarChart3,
   Settings,
-  GraduationCap
+  GraduationCap,
+  LogOut
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -22,6 +24,24 @@ const navItems = [
 ]
 
 export const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
+  const { user, profile, role, signOut } = useAuth()
+
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Staff Member'
+  const userRole = role || 'counsellor'
+
+  // Extract initials (e.g. "Dipti Sharma" -> "DS")
+  const initials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase()
+
+  const handleSignOut = async () => {
+    if (onLinkClick) onLinkClick()
+    await signOut()
+  }
+
   return (
     <>
       <div className="sidebar-header">
@@ -56,14 +76,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLinkClick }) => {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="user-snippet">
-          <div className="user-avatar" aria-hidden="true">
-            BP
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="user-snippet">
+            <div className="user-avatar" aria-hidden="true">
+              {initials}
+            </div>
+            <div className="user-info">
+              <span className="user-name" title={displayName}>
+                {displayName}
+              </span>
+              <span className="user-role-badge">
+                {userRole}
+              </span>
+            </div>
           </div>
-          <div className="user-info">
-            <span className="user-name">Staff Member</span>
-            <span className="user-role-badge">Counsellor</span>
-          </div>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            style={{
+              padding: '0.45rem',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 0.15s ease'
+            }}
+            title="Sign Out"
+            aria-label="Sign Out"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </>

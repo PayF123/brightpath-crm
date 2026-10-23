@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export type UserRole = 'admin' | 'manager' | 'counsellor'
 
 export type LeadSource =
@@ -63,44 +71,113 @@ export interface Activity {
 }
 
 /**
- * Supabase Generic Database Schema Mapping
+ * Standard Supabase Database Schema Mapping
  */
 export interface Database {
   public: {
     Tables: {
       profiles: {
         Row: Profile
-        Insert: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>> & {
+        Insert: {
           id: string
           full_name: string
-        }
-        Update: Partial<Profile>
-      }
-      leads: {
-        Row: Lead
-        Insert: Omit<Lead, 'id' | 'created_at' | 'updated_at'> & {
-          id?: string
+          role?: UserRole
           created_at?: string
           updated_at?: string
         }
-        Update: Partial<Lead>
+        Update: {
+          id?: string
+          full_name?: string
+          role?: UserRole
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: Lead
+        Insert: {
+          id?: string
+          full_name: string
+          email?: string | null
+          phone: string
+          course_interest: string
+          source: LeadSource
+          status?: LeadStatus
+          assigned_to?: string | null
+          created_by?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          full_name?: string
+          email?: string | null
+          phone?: string
+          course_interest?: string
+          source?: LeadSource
+          status?: LeadStatus
+          assigned_to?: string | null
+          created_by?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       follow_ups: {
         Row: FollowUp
-        Insert: Omit<FollowUp, 'id' | 'created_at'> & {
+        Insert: {
           id?: string
+          lead_id: string
+          assigned_to?: string | null
+          due_at: string
+          note: string
+          status?: FollowUpStatus
+          completed_at?: string | null
+          created_by?: string | null
           created_at?: string
         }
-        Update: Partial<FollowUp>
+        Update: {
+          id?: string
+          lead_id?: string
+          assigned_to?: string | null
+          due_at?: string
+          note?: string
+          status?: FollowUpStatus
+          completed_at?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
       }
       activities: {
         Row: Activity
-        Insert: Omit<Activity, 'id' | 'created_at'> & {
+        Insert: {
           id?: string
+          lead_id: string
+          actor_id?: string | null
+          activity_type: string
+          description: string
+          metadata?: Json
           created_at?: string
         }
-        Update: Partial<Activity>
+        Update: {
+          id?: string
+          lead_id?: string
+          actor_id?: string | null
+          activity_type?: string
+          description?: string
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: []
       }
     }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }

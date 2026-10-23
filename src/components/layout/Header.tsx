@@ -1,7 +1,8 @@
 import React from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { Menu, Bell } from 'lucide-react'
+import { Menu, LogOut, Shield } from 'lucide-react'
 import { CloudStatusPill } from '../common/CloudStatusPill'
+import { useAuth } from '../../hooks/useAuth'
 
 interface HeaderProps {
   onMenuToggle: () => void
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onToggleSentinel }) => {
   const location = useLocation()
+  const { user, profile, role, signOut } = useAuth()
 
   const getBreadcrumb = () => {
     const path = location.pathname
@@ -21,6 +23,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onToggleSentinel }
     if (path === '/settings') return 'Settings'
     return 'BrightPath CRM'
   }
+
+  const userRole = role || 'counsellor'
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Staff'
 
   return (
     <header className="app-header">
@@ -45,23 +50,52 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onToggleSentinel }
         {/* Dynamic Cloud Connection Status Pill */}
         <CloudStatusPill onInspect={onToggleSentinel} />
 
-        <button
-          type="button"
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-card)',
-            color: 'var(--text-secondary)',
+        {/* User Role Badge */}
+        {user && (
+          <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          aria-label="Notifications"
-        >
-          <Bell size={17} />
-        </button>
+            gap: '0.4rem',
+            padding: '0.3rem 0.65rem',
+            borderRadius: 'var(--radius-full)',
+            background: 'rgba(37, 99, 235, 0.1)',
+            border: '1px solid rgba(37, 99, 235, 0.25)',
+            color: 'var(--brand-light)',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            textTransform: 'capitalize'
+          }}>
+            <Shield size={12} />
+            <span>{userRole}</span>
+          </div>
+        )}
+
+        {/* Sign Out Quick Action */}
+        {user && (
+          <button
+            type="button"
+            onClick={() => signOut()}
+            style={{
+              padding: '0.45rem 0.75rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-card)',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title={`Signed in as ${displayName} (${user.email}). Click to sign out.`}
+            aria-label="Sign Out"
+          >
+            <LogOut size={14} />
+            <span style={{ display: 'none' }}>Sign Out</span>
+          </button>
+        )}
       </div>
     </header>
   )
