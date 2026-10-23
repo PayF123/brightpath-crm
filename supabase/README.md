@@ -38,11 +38,11 @@ After clicking **Run**, execute this query in the SQL Editor to confirm your tab
 
 ```sql
 SELECT 
-    table_name, 
+    tablename, 
     rowsecurity as rls_enabled
 FROM pg_tables 
 WHERE schemaname = 'public' 
-  AND table_name IN ('profiles', 'leads', 'follow_ups', 'activities');
+  AND tablename IN ('profiles', 'leads', 'follow_ups', 'activities');
 ```
 
 Expected result:
