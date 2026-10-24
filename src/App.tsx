@@ -6,7 +6,7 @@ import { DashboardPage } from './features/dashboard/DashboardPage'
 import { LeadsListPage } from './features/leads/LeadsListPage'
 import { LeadDetailPage } from './features/leads/LeadDetailPage'
 import { FollowUpsPage } from './features/followups/FollowUpsPage'
-import { ReportsShell } from './features/reports/ReportsShell'
+import { ReportsPage } from './features/reports/ReportsPage'
 import { SettingsShell } from './features/settings/SettingsShell'
 import { LoginPage } from './features/auth/LoginPage'
 import { NotFoundPage } from './features/notfound/NotFoundPage'
@@ -26,7 +26,7 @@ export default function App() {
               <Route path="leads" element={<LeadsListPage />} />
               <Route path="leads/:id" element={<LeadDetailPage />} />
               <Route path="followups" element={<FollowUpsPage />} />
-              <Route path="reports" element={<ReportsShell />} />
+              <Route path="reports" element={<ReportsPage />} />
               <Route path="settings" element={<SettingsShell />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
