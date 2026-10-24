@@ -19,6 +19,11 @@ export interface LeadWithProfile extends Lead {
     full_name: string
     role: UserRole
   } | null
+  created_profile?: {
+    id: string
+    full_name: string
+    role: UserRole
+  } | null
 }
 
 export interface LeadFilterParams {
@@ -173,6 +178,132 @@ export const leadService = {
     }
 
     return (data as unknown as LeadWithProfile[]) || []
+  },
+
+  /**
+   * Fetches a single lead by its UUID, including joined counsellor and creator profiles.
+   */
+  async getLeadById(id: string): Promise<LeadWithProfile | null> {
+    if (!supabase) return null
+
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*, assigned_profile:profiles!assigned_to(id, full_name, role), created_profile:profiles!created_by(id, full_name, role)')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Error fetching lead by id:', error.message)
+      return null
+    }
+
+    return (data as unknown as LeadWithProfile) || null
+  },
+
+  /**
+   * Updates lead status along the progression pipeline and records an audit log.
+   */
+  async updateLeadStatus(
+    id: string,
+    newStatus: LeadStatus,
+    currentUserId: string,
+    reason?: string,
+    notes?: string
+  ): Promise<LeadWithProfile | null> {
+    if (!supabase) throw new Error('Supabase client is not configured.')
+
+    // Fetch current lead to record previous_status
+    const currentLead = await this.getLeadById(id)
+    if (!currentLead) throw new Error('Lead not found.')
+
+    const previousStatus = currentLead.status
+
+    const updatePayload: Record<string, unknown> = {
+      status: newStatus,
+      updated_at: new Date().toISOString()
+    }
+
+    // If a cancellation reason or explanation is given, append/update notes
+    if (reason) {
+      const reasonNote = `[Status: ${newStatus}] Reason: ${reason}${notes ? ` - ${notes}` : ''}`
+      updatePayload.notes = currentLead.notes ? `${currentLead.notes}\n${reasonNote}` : reasonNote
+    }
+
+    const { data, error } = await (supabase.from('leads') as any)
+      .update(updatePayload)
+      .eq('id', id)
+      .select('*, assigned_profile:profiles!assigned_to(id, full_name, role)')
+      .single()
+
+    if (error) {
+      console.error('Error updating lead status:', error.message)
+      throw new Error(error.message)
+    }
+
+    // Automatically record activity log
+    const activityDesc = reason
+      ? `Lead marked as ${newStatus}: ${reason}`
+      : `Status advanced from ${previousStatus} to ${newStatus}`
+
+    await activityService.logActivity({
+      leadId: id,
+      actorId: currentUserId,
+      activityType: 'STATUS_CHANGED',
+      description: activityDesc,
+      metadata: {
+        previous_status: previousStatus,
+        new_status: newStatus,
+        reason: reason || null,
+        notes: notes || null
+      }
+    })
+
+    return data as LeadWithProfile
+  },
+
+  /**
+   * Updates lead contact details, counsellor assignment, or course interest.
+   */
+  async updateLead(
+    id: string,
+    updates: Partial<CreateLeadInput>,
+    currentUserId: string
+  ): Promise<LeadWithProfile | null> {
+    if (!supabase) throw new Error('Supabase client is not configured.')
+
+    const payload: Record<string, unknown> = {
+      updated_at: new Date().toISOString()
+    }
+
+    if (updates.full_name !== undefined) payload.full_name = updates.full_name.trim()
+    if (updates.phone !== undefined) payload.phone = updates.phone.trim()
+    if (updates.email !== undefined) payload.email = updates.email ? updates.email.trim() : null
+    if (updates.course_interest !== undefined) payload.course_interest = updates.course_interest
+    if (updates.source !== undefined) payload.source = updates.source
+    if (updates.assigned_to !== undefined) payload.assigned_to = updates.assigned_to
+    if (updates.notes !== undefined) payload.notes = updates.notes ? updates.notes.trim() : null
+
+    const { data, error } = await (supabase.from('leads') as any)
+      .update(payload)
+      .eq('id', id)
+      .select('*, assigned_profile:profiles!assigned_to(id, full_name, role)')
+      .single()
+
+    if (error) {
+      console.error('Error updating lead:', error.message)
+      throw new Error(error.message)
+    }
+
+    // Log update activity
+    await activityService.logActivity({
+      leadId: id,
+      actorId: currentUserId,
+      activityType: 'LEAD_UPDATED',
+      description: 'Lead profile details updated by staff',
+      metadata: { updated_fields: Object.keys(updates) }
+    })
+
+    return data as LeadWithProfile
   },
 
   /**

@@ -4,7 +4,7 @@ import { ProtectedRoute } from './components/common/ProtectedRoute'
 import { AppLayout } from './components/layout/AppLayout'
 import { DashboardShell } from './features/dashboard/DashboardShell'
 import { LeadsListPage } from './features/leads/LeadsListPage'
-import { LeadDetailShell } from './features/leads/LeadDetailShell'
+import { LeadDetailPage } from './features/leads/LeadDetailPage'
 import { FollowupsShell } from './features/followups/FollowupsShell'
 import { ReportsShell } from './features/reports/ReportsShell'
 import { SettingsShell } from './features/settings/SettingsShell'
@@ -24,7 +24,7 @@ export default function App() {
             <Route path="/" element={<AppLayout />}>
               <Route index element={<DashboardShell />} />
               <Route path="leads" element={<LeadsListPage />} />
-              <Route path="leads/:id" element={<LeadDetailShell />} />
+              <Route path="leads/:id" element={<LeadDetailPage />} />
               <Route path="followups" element={<FollowupsShell />} />
               <Route path="reports" element={<ReportsShell />} />
               <Route path="settings" element={<SettingsShell />} />

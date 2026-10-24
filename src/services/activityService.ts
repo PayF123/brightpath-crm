@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient'
-import { Activity } from '../types/database.types'
+import { Activity, UserRole } from '../types/database.types'
 
 export interface LogActivityInput {
   leadId: string
@@ -7,6 +7,14 @@ export interface LogActivityInput {
   activityType: string
   description: string
   metadata?: Record<string, unknown>
+}
+
+export interface ActivityWithActor extends Activity {
+  actor_profile?: {
+    id: string
+    full_name: string
+    role: UserRole
+  } | null
 }
 
 /**
@@ -53,14 +61,27 @@ export const activityService = {
   },
 
   /**
-   * Fetches chronological activity timeline for a specific lead.
+   * Logs an instant consultation note to a lead's activity timeline.
    */
-  async getLeadActivities(leadId: string): Promise<Activity[]> {
+  async addLeadNote(leadId: string, actorId: string, noteText: string): Promise<Activity | null> {
+    return this.logActivity({
+      leadId,
+      actorId,
+      activityType: 'NOTE_ADDED',
+      description: noteText.trim(),
+      metadata: { note: noteText.trim() }
+    })
+  },
+
+  /**
+   * Fetches chronological activity timeline for a specific lead, joined with actor profile.
+   */
+  async getLeadActivities(leadId: string): Promise<ActivityWithActor[]> {
     if (!supabase) return []
 
     const { data, error } = await supabase
       .from('activities')
-      .select('*')
+      .select('*, actor_profile:profiles!actor_id(id, full_name, role)')
       .eq('lead_id', leadId)
       .order('created_at', { ascending: false })
 
@@ -69,6 +90,6 @@ export const activityService = {
       return []
     }
 
-    return data || []
+    return (data as unknown as ActivityWithActor[]) || []
   }
 }
