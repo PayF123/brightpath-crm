@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Users,
@@ -7,12 +7,51 @@ import {
   AlertCircle,
   TrendingUp,
   ArrowRight,
-  Clock
+  Clock,
+  Plus
 } from 'lucide-react'
+import { LeadFormModal } from '../leads/LeadFormModal'
+import { Lead } from '../../types/database.types'
 
 export const DashboardShell: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [successToast, setSuccessToast] = useState<string | null>(null)
+
+  const handleLeadCreated = (newLead: Lead) => {
+    setSuccessToast(`Lead for "${newLead.full_name}" created successfully!`)
+    setTimeout(() => {
+      setSuccessToast(null)
+    }, 4500)
+  }
+
   return (
     <div>
+      {/* Toast Notification */}
+      {successToast && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.65rem',
+          padding: '0.85rem 1.25rem',
+          background: 'rgba(16, 185, 129, 0.15)',
+          border: '1px solid rgba(16, 185, 129, 0.4)',
+          borderRadius: 'var(--radius-md)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+          color: '#34d399',
+          fontSize: '0.88rem',
+          fontWeight: 500,
+          animation: 'fadeIn 0.25s ease-out'
+        }}>
+          <CheckCircle2 size={18} />
+          <span>{successToast}</span>
+        </div>
+      )}
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Executive Dashboard</h1>
@@ -21,7 +60,15 @@ export const DashboardShell: React.FC = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Link to="/leads" className="btn btn-primary">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Plus size={16} />
+            <span>Quick Add Lead</span>
+          </button>
+          <Link to="/leads" className="btn btn-secondary">
             <span>View All Leads</span>
             <ArrowRight size={16} />
           </Link>
@@ -125,6 +172,13 @@ export const DashboardShell: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Lead Form Modal */}
+      <LeadFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleLeadCreated}
+      />
     </div>
   )
 }
