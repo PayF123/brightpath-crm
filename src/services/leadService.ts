@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient'
-import { Lead, LeadSource, LeadStatus, Profile } from '../types/database.types'
+import { Lead, LeadSource, LeadStatus, Profile, UserRole } from '../types/database.types'
 import { activityService } from './activityService'
 
 export interface CreateLeadInput {
@@ -11,6 +11,24 @@ export interface CreateLeadInput {
   status?: LeadStatus
   assigned_to?: string | null
   notes?: string | null
+}
+
+export interface LeadWithProfile extends Lead {
+  assigned_profile?: {
+    id: string
+    full_name: string
+    role: UserRole
+  } | null
+}
+
+export interface LeadFilterParams {
+  search?: string
+  status?: string
+  source?: string
+  course?: string
+  assignedTo?: string
+  sortBy?: 'created_at' | 'full_name'
+  sortOrder?: 'asc' | 'desc'
 }
 
 export const leadService = {
@@ -103,5 +121,92 @@ export const leadService = {
     }
 
     return data || []
+  },
+
+  /**
+   * Fetches filtered leads supporting debounced text search, multi-field filters,
+   * column sorting, and joined staff profile data.
+   */
+  async getFilteredLeads(filters: LeadFilterParams = {}): Promise<LeadWithProfile[]> {
+    if (!supabase) return []
+
+    let query = supabase
+      .from('leads')
+      .select('*, assigned_profile:profiles!assigned_to(id, full_name, role)')
+
+    // 1. Text Search across name, phone, email
+    if (filters.search && filters.search.trim()) {
+      const term = filters.search.trim()
+      query = query.or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%`)
+    }
+
+    // 2. Status Filter
+    if (filters.status && filters.status !== 'All') {
+      query = query.eq('status', filters.status)
+    }
+
+    // 3. Source Filter
+    if (filters.source && filters.source !== 'All') {
+      query = query.eq('source', filters.source)
+    }
+
+    // 4. Course Filter
+    if (filters.course && filters.course !== 'All') {
+      query = query.eq('course_interest', filters.course)
+    }
+
+    // 5. Assignee Filter
+    if (filters.assignedTo && filters.assignedTo !== 'All') {
+      query = query.eq('assigned_to', filters.assignedTo)
+    }
+
+    // 6. Sorting
+    const sortColumn = filters.sortBy || 'created_at'
+    const isAscending = filters.sortOrder === 'asc'
+    query = query.order(sortColumn, { ascending: isAscending })
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Error fetching filtered leads:', error.message)
+      return []
+    }
+
+    return (data as unknown as LeadWithProfile[]) || []
+  },
+
+  /**
+   * Returns counts of leads grouped by status for quick status badges.
+   */
+  async getStatusCounts(): Promise<Record<string, number>> {
+    if (!supabase) return {}
+
+    const { data, error } = await supabase
+      .from('leads')
+      .select('status')
+
+    if (error) {
+      console.error('Error fetching status counts:', error.message)
+      return {}
+    }
+
+    const rows = (data as unknown as Array<{ status: string }>) || []
+
+    const counts: Record<string, number> = {
+      All: rows.length,
+      New: 0,
+      Contacted: 0,
+      Qualified: 0,
+      Converted: 0,
+      Lost: 0
+    }
+
+    rows.forEach((row) => {
+      if (row.status && row.status in counts) {
+        counts[row.status] = (counts[row.status] || 0) + 1
+      }
+    })
+
+    return counts
   }
 }

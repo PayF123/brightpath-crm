@@ -3,7 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './components/common/ProtectedRoute'
 import { AppLayout } from './components/layout/AppLayout'
 import { DashboardShell } from './features/dashboard/DashboardShell'
-import { LeadsShell } from './features/leads/LeadsShell'
+import { LeadsListPage } from './features/leads/LeadsListPage'
 import { LeadDetailShell } from './features/leads/LeadDetailShell'
 import { FollowupsShell } from './features/followups/FollowupsShell'
 import { ReportsShell } from './features/reports/ReportsShell'
@@ -23,7 +23,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<AppLayout />}>
               <Route index element={<DashboardShell />} />
-              <Route path="leads" element={<LeadsShell />} />
+              <Route path="leads" element={<LeadsListPage />} />
               <Route path="leads/:id" element={<LeadDetailShell />} />
               <Route path="followups" element={<FollowupsShell />} />
               <Route path="reports" element={<ReportsShell />} />
