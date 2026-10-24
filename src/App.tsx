@@ -5,7 +5,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import { DashboardShell } from './features/dashboard/DashboardShell'
 import { LeadsListPage } from './features/leads/LeadsListPage'
 import { LeadDetailPage } from './features/leads/LeadDetailPage'
-import { FollowupsShell } from './features/followups/FollowupsShell'
+import { FollowUpsPage } from './features/followups/FollowUpsPage'
 import { ReportsShell } from './features/reports/ReportsShell'
 import { SettingsShell } from './features/settings/SettingsShell'
 import { LoginPage } from './features/auth/LoginPage'
@@ -25,7 +25,7 @@ export default function App() {
               <Route index element={<DashboardShell />} />
               <Route path="leads" element={<LeadsListPage />} />
               <Route path="leads/:id" element={<LeadDetailPage />} />
-              <Route path="followups" element={<FollowupsShell />} />
+              <Route path="followups" element={<FollowUpsPage />} />
               <Route path="reports" element={<ReportsShell />} />
               <Route path="settings" element={<SettingsShell />} />
               <Route path="*" element={<NotFoundPage />} />

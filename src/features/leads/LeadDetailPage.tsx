@@ -14,17 +14,22 @@ import {
   CheckCircle2,
   RefreshCw,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle,
+  Plus
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { leadService, LeadWithProfile } from '../../services/leadService'
 import { activityService, ActivityWithActor } from '../../services/activityService'
+import { followupService, FollowUpWithDetails } from '../../services/followupService'
 import { StatusBadge } from '../../components/common/StatusBadge'
 import { LeadStatusStepper } from './LeadStatusStepper'
 import { LostReasonModal } from './LostReasonModal'
 import { EditLeadModal } from './EditLeadModal'
 import { LeadActivityTimeline } from './LeadActivityTimeline'
+import { FollowUpModal } from '../followups/FollowUpModal'
 import { EmptyState } from '../../components/common/EmptyState'
+import { formatFollowUpDue, isFollowUpOverdue } from '../../utils/dateUtils'
 import { LeadStatus, Profile } from '../../types/database.types'
 
 export const LeadDetailPage: React.FC = () => {
@@ -34,15 +39,18 @@ export const LeadDetailPage: React.FC = () => {
 
   const [lead, setLead] = useState<LeadWithProfile | null>(null)
   const [activities, setActivities] = useState<ActivityWithActor[]>([])
+  const [leadFollowUps, setLeadFollowUps] = useState<FollowUpWithDetails[]>([])
   const [staffProfiles, setStaffProfiles] = useState<Profile[]>([])
 
   const [loading, setLoading] = useState(true)
   const [loadingActivities, setLoadingActivities] = useState(true)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [completingFollowUpId, setCompletingFollowUpId] = useState<string | null>(null)
 
   // Modals state
   const [isLostModalOpen, setIsLostModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const showToast = (msg: string) => {
@@ -78,6 +86,17 @@ export const LeadDetailPage: React.FC = () => {
     }
   }, [id])
 
+  // Fetch follow-ups for this lead
+  const loadLeadFollowUps = useCallback(async () => {
+    if (!id) return
+    try {
+      const data = await followupService.getLeadFollowUps(id)
+      setLeadFollowUps(data)
+    } catch (err) {
+      console.error('Failed to load lead follow-ups:', err)
+    }
+  }, [id])
+
   // Fetch staff profiles for reassignment
   useEffect(() => {
     leadService.getStaffProfiles()
@@ -88,7 +107,8 @@ export const LeadDetailPage: React.FC = () => {
   useEffect(() => {
     loadLead()
     loadActivities()
-  }, [loadLead, loadActivities])
+    loadLeadFollowUps()
+  }, [loadLead, loadActivities, loadLeadFollowUps])
 
   // Status Change Handler
   const handleStatusChange = async (newStatus: LeadStatus) => {
@@ -143,6 +163,29 @@ export const LeadDetailPage: React.FC = () => {
     showToast('Consultation note recorded!')
   }
 
+  // Follow-up Scheduled Handler
+  const handleFollowUpScheduled = (newFollowUp: FollowUpWithDetails) => {
+    setLeadFollowUps((prev) => [newFollowUp, ...prev])
+    showToast('Follow-up task scheduled successfully!')
+    loadActivities()
+  }
+
+  // Complete Follow-up directly from lead page
+  const handleCompleteFollowUp = async (followUpId: string) => {
+    if (!user?.id) return
+    setCompletingFollowUpId(followUpId)
+    try {
+      await followupService.completeFollowUp(followUpId, user.id)
+      showToast('Follow-up task completed!')
+      await loadLeadFollowUps()
+      await loadActivities()
+    } catch (err) {
+      console.error('Error completing follow-up:', err)
+    } finally {
+      setCompletingFollowUpId(null)
+    }
+  }
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '—'
     try {
@@ -194,6 +237,7 @@ export const LeadDetailPage: React.FC = () => {
 
   const counsellor = lead.assigned_profile
   const creator = lead.created_profile
+  const pendingFollowUps = leadFollowUps.filter((f) => f.status === 'pending')
 
   return (
     <div>
@@ -270,13 +314,14 @@ export const LeadDetailPage: React.FC = () => {
             <span>Edit Details</span>
           </button>
 
-          <Link
-            to="/followups"
+          <button
+            type="button"
             className="btn btn-primary"
+            onClick={() => setIsFollowUpModalOpen(true)}
           >
             <CalendarClock size={16} />
             <span>Schedule Follow-up</span>
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -290,8 +335,123 @@ export const LeadDetailPage: React.FC = () => {
 
       {/* Main 2-Column Grid */}
       <div className="grid-cols-2">
-        {/* Left Column: Student Details & Consultation Information */}
+        {/* Left Column: Student Details, Follow-ups & Consultation Notes */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Active Follow-up Tasks Card */}
+          <div className="card" style={{ padding: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CalendarClock size={16} style={{ color: 'var(--brand-light)' }} />
+                <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                  Follow-up Reminders
+                </h2>
+                <span className="badge badge-secondary" style={{ fontSize: '0.72rem' }}>
+                  {pendingFollowUps.length} pending
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFollowUpModalOpen(true)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--brand-light)',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem'
+                }}
+              >
+                <Plus size={14} />
+                <span>Add</span>
+              </button>
+            </div>
+
+            {pendingFollowUps.length === 0 ? (
+              <div style={{
+                padding: '1.25rem',
+                borderRadius: 'var(--radius-md)',
+                background: 'rgba(0,0,0,0.2)',
+                border: '1px dashed var(--border-card)',
+                textAlign: 'center',
+                color: 'var(--text-muted)',
+                fontSize: '0.84rem'
+              }}>
+                No pending follow-ups for this student. Click "+ Add" to set a callback reminder.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                {pendingFollowUps.map((task) => {
+                  const isOverdue = isFollowUpOverdue(task.due_at, task.status)
+                  const dueInfo = formatFollowUpDue(task.due_at, task.status)
+
+                  return (
+                    <div
+                      key={task.id}
+                      style={{
+                        padding: '0.75rem 0.9rem',
+                        borderRadius: 'var(--radius-md)',
+                        background: isOverdue ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                        border: `1px solid ${isOverdue ? 'var(--status-overdue-border)' : 'var(--border-subtle)'}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                        <div style={{ fontSize: '0.86rem', color: '#fff', fontWeight: 500 }}>
+                          "{task.note}"
+                        </div>
+                        {isOverdue ? (
+                          <span className="badge badge-overdue" style={{ fontSize: '0.7rem', flexShrink: 0 }}>
+                            {dueInfo.label}
+                          </span>
+                        ) : (
+                          <span className="badge badge-secondary" style={{ fontSize: '0.7rem', flexShrink: 0 }}>
+                            {dueInfo.label}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.35rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                          Assignee: {task.assigned_profile ? task.assigned_profile.full_name : 'Counsellor'}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={completingFollowUpId === task.id}
+                          onClick={() => handleCompleteFollowUp(task.id)}
+                          style={{
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            color: '#34d399',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0.2rem 0.6rem',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}
+                        >
+                          {completingFollowUpId === task.id ? (
+                            <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
+                          ) : (
+                            <CheckCircle2 size={12} />
+                          )}
+                          <span>Complete</span>
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Contact & Program Card */}
           <div className="card">
             <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '1.25rem' }}>
@@ -474,6 +634,15 @@ export const LeadDetailPage: React.FC = () => {
         staffProfiles={staffProfiles}
         onClose={() => setIsEditModalOpen(false)}
         onSuccess={handleLeadUpdated}
+        currentUserId={user?.id || ''}
+      />
+
+      {/* Follow-up Scheduling Modal */}
+      <FollowUpModal
+        isOpen={isFollowUpModalOpen}
+        onClose={() => setIsFollowUpModalOpen(false)}
+        onSuccess={handleFollowUpScheduled}
+        targetLead={lead}
         currentUserId={user?.id || ''}
       />
     </div>
