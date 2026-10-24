@@ -163,3 +163,48 @@ export function getDefaultDueDateTime(): string {
   d.setMilliseconds(0)
   return toDateTimeLocalString(d)
 }
+
+/**
+ * Formats an ISO date string into a clean relative time (e.g. "Just now", "5m ago", "2h ago", "3d ago").
+ */
+export function formatRelativeTime(isoString: string): string {
+  const date = new Date(isoString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+
+  if (diffMs < 0) {
+    const absDiff = Math.abs(diffMs)
+    const mins = Math.floor(absDiff / (1000 * 60))
+    if (mins < 60) return `in ${mins}m`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `in ${hours}h`
+    const days = Math.floor(hours / 24)
+    return `in ${days}d`
+  }
+
+  const diffSec = Math.floor(diffMs / 1000)
+  if (diffSec < 45) return 'Just now'
+
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+
+  const diffHours = Math.floor(diffMin / 60)
+  if (diffHours < 24) return `${diffHours}h ago`
+
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays}d ago`
+
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+/**
+ * Formats an ISO date string into a standard display date (e.g. "Oct 25, 2026").
+ */
+export function formatDate(isoString: string): string {
+  const date = new Date(isoString)
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
+}
